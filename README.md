@@ -5,7 +5,7 @@ Microservice to convert whatever formats Inkscape reads to whatever formats Inks
 ## Example usage
 
 ### Convert a SVG to PDF
-
+Blocking call, returning a PDF.
 ```bash
 curl --location --request POST 'http://localhost:8080/images/' \
 --header 'Content-Type: application/json' \
