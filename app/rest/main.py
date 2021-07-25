@@ -1,4 +1,5 @@
 #!/bin/usr/python3
+import asyncio
 import base64
 import logging.config
 import os
@@ -66,17 +67,20 @@ async def convert_image(conversion_in: ConversionIn):
         async with aiofiles.tempfile.NamedTemporaryFile(
             mode="w", suffix=f".{conversion_id}.{conversion_in.outputformat}", delete=False
         ) as output_file:
-            conversion.convert(
-                conversion_in.inputformat,
-                conversion_in.outputformat,
-                input_file,
-                output_file,
-            )
+            # start a separate thread to avoid blocking the event loop and enable parallel inkscape processes
+            logger.debug("Running conversion in a thread...")
+            await asyncio.to_thread(conversion.convert, **{
+                "input_format": conversion_in.inputformat,
+                "output_format": conversion_in.outputformat,
+                "input_file": input_file,
+                "output_file": output_file,
+            })
+            logger.debug("Ran conversion in a thread")
 
             # CAVEAT: provide a random filename as some clients may write temporary files with this name
             # (and overwrite former files, which results in a great race condition)
             filename = f"{conversion_id}.{conversion_in.outputformat}"
-            logger.debug(f"Sending PDF file as '{filename}' ...")
+            logger.debug(f"Sending PDF file as '{filename}'...")
             return FileResponse(
                 output_file.name, filename=filename
             )

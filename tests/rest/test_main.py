@@ -14,4 +14,3 @@ def test_get_health_async():
     response = client.get("/health_async")
     assert response.status_code == 200
     assert response.json()["status"] == "up"
-
