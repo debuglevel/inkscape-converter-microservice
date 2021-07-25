@@ -9,12 +9,12 @@ conversions: int = 0
 
 
 def convert(input_format: str, output_format: str, input_file, output_file):
+    logger.debug(
+        f"Converting {input_file.name} to {output_file.name} ({input_format} to {output_format})..."
+    )
+
     global conversions
     conversions = conversions + 1
-
-    logger.debug(
-        f"Converting {input_file.name} from {input_format} to {output_format}, named {output_file.name}..."
-    )
 
     process_arguments = [
         "inkscape",
