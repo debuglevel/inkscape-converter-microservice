@@ -14,11 +14,13 @@ import aiofiles
 from fastapi import FastAPI
 from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse
+
+import app.library.conversions
 from app.library import health
-from app.library.conversions import Conversion
+from app.library.conversion_repository import Conversion
 from app.rest import conversion
 from app.rest.conversion import ConversionRequest, ConversionResponse
-from app.library import conversions
+from app.library import conversion_repository
 from fastapi import BackgroundTasks, FastAPI
 
 fastapi = FastAPI()
@@ -54,8 +56,8 @@ async def get_health_async():
 async def download_image(image_id: str) -> FileResponse:
     logger.debug(f"Received GET request on /images/{image_id}/download")
 
-    conversion_ = await conversions.get(image_id)
-    filename = conversions.get_filename_from_id(conversion_.id, conversion_.output_format)
+    conversion_ = await conversion_repository.get(image_id)
+    filename = app.library.conversions.get_filename_from_id(conversion_.id, conversion_.output_format)
 
     # CAVEAT: provide a random filename as some clients may write temporary files with this name
     # (and overwrite former files, which results in a great race condition)
@@ -69,14 +71,14 @@ async def download_image(image_id: str) -> FileResponse:
 async def get_image(image_id: str) -> ConversionResponse:
     logger.debug(f"Received GET request on /images/{image_id}")
 
-    conversion_ = await conversions.get(image_id)
+    conversion_ = await conversion_repository.get(image_id)
 
     return conversion.to_conversion_response(conversion_)
 
 
 async def save_and_convert(conversion_: Conversion, base64_string: str):
-    await conversions.save_input_file(conversion_, base64_string)
-    conversions.convert(conversion_)
+    await app.library.conversions.save_input_file(conversion_, base64_string)
+    await app.library.conversions.convert(conversion_)
 
 
 @fastapi.post("/images/",
@@ -86,7 +88,7 @@ async def post_image(conversion_request: ConversionRequest, background_tasks: Ba
     logger.debug("Received POST request on /images/")
 
     conversion_ = conversion.to_conversion(conversion_request)
-    conversion_ = await conversions.add(conversion_)
+    conversion_ = await conversion_repository.add(conversion_)
 
     background_tasks.add_task(save_and_convert, *(conversion_, conversion_request.base64))
 
@@ -99,7 +101,7 @@ async def get_images() -> List[ConversionResponse]:
     logger.debug(f"Received GET request on /images/")
 
     conversion_responses = [conversion.to_conversion_response(conversion_) for conversion_ in
-                            await conversions.get_all()]
+                            await conversion_repository.get_all()]
     return conversion_responses
 
 
@@ -107,4 +109,4 @@ async def get_images() -> List[ConversionResponse]:
 async def delete_image(image_id: str):
     logger.debug(f"Received DELETE request on /images/{image_id}")
 
-    await conversions.delete(image_id)
+    await conversion_repository.delete(image_id)

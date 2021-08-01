@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.library.conversions import Conversion
+from app.library.conversion_repository import Conversion
 
 
 class ConversionRequest(BaseModel):

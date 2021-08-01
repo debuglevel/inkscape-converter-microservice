@@ -14,6 +14,7 @@ from datetime import datetime
 from tinydb import TinyDB, Query
 
 from app.library import configuration
+from app.library.conversion_repository import Conversion
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -21,104 +22,16 @@ logger = logging.getLogger(__name__)
 conversions: int = 0
 
 
-class Conversion(BaseModel):
-    id: Optional[str]
-    input_format: str
-    output_format: str
-    created_on: Optional[str]
-
-
 def get_conversions_directory():
+    logger.debug("Getting conversions directory...")
     conversions_directory = configuration.get_configuration().conversions_directory
     os.makedirs(conversions_directory, exist_ok=True)
     return conversions_directory
 
 
-def get_database_filename():
-    database_directory = configuration.get_configuration().database_directory
-    os.makedirs(database_directory, exist_ok=True)
-    return f'{database_directory}/database.json'
-
-
-def get_database():
-    logger.debug(f"Opening TinyDB '{get_database_filename()}'...")
-    database = TinyDB(get_database_filename())
-    return database
-
-
-async def add(conversion: Conversion) -> Conversion:
-    logger.debug(f"Creating conversion...")
-
-    conversion_id = str(uuid.uuid4())
-
-    conversion = conversion.dict() | {"id": conversion_id, "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    pprint(conversion)
-    conversion = Conversion(**conversion)
-
-    database = get_database()
-
-    logger.debug(f"Inserting {conversion}...")
-    document_id = database.insert(conversion.dict())
-
-    logger.debug(f"Getting inserted...")
-    retrieved_conversion_document = database.get(doc_id=document_id)
-    logger.debug(f"Got inserted {retrieved_conversion_document}")
-
-    logger.debug("Converting document to model...")
-    retrieved_conversion = Conversion(**retrieved_conversion_document)
-    logger.debug(f"Got inserted {retrieved_conversion}")
-
-    return retrieved_conversion
-
-
-async def get(id_: str) -> Conversion:
-    logger.debug(f"Getting conversion with id={id_}...")
-
-    database = get_database()
-
-    conversion_query = Query()
-
-    logger.debug(f"Getting document...")
-    retrieved_conversion_document = database.get(conversion_query.id == id_)
-    logger.debug(f"Got {retrieved_conversion_document}")
-
-    logger.debug("Converting document to model...")
-    retrieved_conversion = Conversion(**retrieved_conversion_document)
-    logger.debug(f"Got {retrieved_conversion}")
-
-    return retrieved_conversion
-
-
-async def get_all() -> List[Conversion]:
-    logger.debug(f"Getting conversions...")
-
-    database = get_database()
-
-    logger.debug(f"Getting document...")
-    retrieved_conversion_documents = database.all()
-    logger.debug(f"Got {retrieved_conversion_documents}")
-
-    logger.debug("Converting documents to models...")
-    retrieved_conversions = [Conversion(**retrieved_conversion_document) for retrieved_conversion_document in retrieved_conversion_documents]
-    logger.debug(f"Got {retrieved_conversions}")
-
-    return retrieved_conversions
-
-
-async def delete(id_: str):
-    logger.debug(f"Deleting conversion with id={id_}...")
-
-    database = get_database()
-
-    conversion_query = Query()
-
-    logger.debug(f"Removing document...")
-    database.remove(conversion_query.id == id_)
-
-
 def get_filename_from_id(id_: str, output_format: str) -> str:
     logger.debug(f"Getting filename for output format={output_format}, id={id_}...")
-    return f"{get_conversions_directory()}/{id_}.{output_format}"
+    return os.path.join(get_conversions_directory(), f"{id_}.{output_format}")
 
 
 async def save_input_file(conversion_: Conversion, base64_string: str):
