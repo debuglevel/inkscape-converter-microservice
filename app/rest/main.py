@@ -102,4 +102,9 @@ async def get_images() -> List[ConversionResponse]:
                             await conversions.get_all()]
     return conversion_responses
 
-# TODO: DELETE
+
+@fastapi.delete("/images/{image_id}")
+async def delete_image(image_id: str):
+    logger.debug(f"Received DELETE request on /images/{image_id}")
+
+    await conversions.delete(image_id)

@@ -105,6 +105,17 @@ async def get_all() -> List[Conversion]:
     return retrieved_conversions
 
 
+async def delete(id_: str):
+    logger.debug(f"Deleting conversion with id={id_}...")
+
+    database = get_database()
+
+    conversion_query = Query()
+
+    logger.debug(f"Removing document...")
+    database.remove(conversion_query.id == id_)
+
+
 def get_filename_from_id(id_: str, output_format: str) -> str:
     logger.debug(f"Getting filename for output format={output_format}, id={id_}...")
     return f"{get_conversions_directory()}/{id_}.{output_format}"

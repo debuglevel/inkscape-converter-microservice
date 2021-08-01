@@ -30,6 +30,10 @@ GET conversion output:
 $ curl -o test.pdf 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18/download'
 ```
 
+DELETE conversion:
+```bash
+$ curl --request DELETE 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18'
+```
 ## Development
 
 ### Environment
