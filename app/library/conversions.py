@@ -49,7 +49,7 @@ def get_database():
 async def add(conversion: Conversion) -> Conversion:
     logger.debug(f"Creating conversion...")
 
-    conversion_id = str(uuid.uuid4()) # TODO test if str() is really needed
+    conversion_id = str(uuid.uuid4())
 
     conversion = conversion.dict() | {"id": conversion_id, "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     pprint(conversion)
