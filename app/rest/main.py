@@ -1,27 +1,17 @@
 #!/bin/usr/python3
-import asyncio
-import base64
 import logging.config
-import os
-import tempfile
-import uuid
-from pprint import pprint
 from typing import List
 
-from fastapi import FastAPI, status
-
-import aiofiles
-from fastapi import FastAPI
-from fastapi.openapi.models import Response
+from fastapi import BackgroundTasks, FastAPI
+from fastapi import status
 from fastapi.responses import FileResponse
 
 import app.library.conversions
+from app.library import conversion_repository
 from app.library import health
 from app.library.conversion_repository import Conversion
 from app.rest import conversion
 from app.rest.conversion import ConversionRequest, ConversionResponse
-from app.library import conversion_repository
-from fastapi import BackgroundTasks, FastAPI
 
 fastapi = FastAPI()
 
@@ -50,14 +40,22 @@ async def get_health_async():
     response_class=FileResponse,
     responses={
         # Manually specify a possible response with our custom media type.
-        200: {"content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}}
+        200: {
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            }
+        }
     },
 )
 async def download_image(image_id: str) -> FileResponse:
     logger.debug(f"Received GET request on /images/{image_id}/download")
 
     conversion_ = await conversion_repository.get(image_id)
-    filename = app.library.conversions.get_filename_from_id(conversion_.id, conversion_.output_format)
+    filename = app.library.conversions.get_filename_from_id(
+        conversion_.id, conversion_.output_format
+    )
 
     # CAVEAT: provide a random filename as some clients may write temporary files with this name
     # (and overwrite former files, which results in a great race condition)
@@ -66,8 +64,7 @@ async def download_image(image_id: str) -> FileResponse:
     return FileResponse(filename, filename=filenamex)
 
 
-@fastapi.get("/images/{image_id}",
-             response_model=ConversionResponse)
+@fastapi.get("/images/{image_id}", response_model=ConversionResponse)
 async def get_image(image_id: str) -> ConversionResponse:
     logger.debug(f"Received GET request on /images/{image_id}")
 
@@ -81,27 +78,32 @@ async def save_and_convert(conversion_: Conversion, base64_string: str):
     await app.library.conversions.convert(conversion_)
 
 
-@fastapi.post("/images/",
-              status_code=status.HTTP_202_ACCEPTED,
-              response_model=ConversionResponse)
-async def post_image(conversion_request: ConversionRequest, background_tasks: BackgroundTasks) -> ConversionResponse:
+@fastapi.post(
+    "/images/", status_code=status.HTTP_202_ACCEPTED, response_model=ConversionResponse
+)
+async def post_image(
+    conversion_request: ConversionRequest, background_tasks: BackgroundTasks
+) -> ConversionResponse:
     logger.debug("Received POST request on /images/")
 
     conversion_ = conversion.to_conversion(conversion_request)
     conversion_ = await conversion_repository.add(conversion_)
 
-    background_tasks.add_task(save_and_convert, *(conversion_, conversion_request.base64))
+    background_tasks.add_task(
+        save_and_convert, *(conversion_, conversion_request.base64)
+    )
 
     return conversion.to_conversion_response(conversion_)
 
 
-@fastapi.get("/images/",
-             response_model=List[ConversionResponse])
+@fastapi.get("/images/", response_model=List[ConversionResponse])
 async def get_images() -> List[ConversionResponse]:
     logger.debug(f"Received GET request on /images/")
 
-    conversion_responses = [conversion.to_conversion_response(conversion_) for conversion_ in
-                            await conversion_repository.get_all()]
+    conversion_responses = [
+        conversion.to_conversion_response(conversion_)
+        for conversion_ in await conversion_repository.get_all()
+    ]
     return conversion_responses
 
 

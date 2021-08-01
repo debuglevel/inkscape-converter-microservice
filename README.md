@@ -1,11 +1,14 @@
 # Inkscape Converter Microservice
 
-Microservice to convert whatever formats Inkscape reads to whatever formats Inkscape writes (using the `--export-filename` argument).
+Microservice to convert whatever formats Inkscape reads to whatever formats Inkscape writes (using
+the `--export-filename` argument).
 
 ## Example usage
 
 ### Convert a SVG to PDF
+
 POST a conversion job:
+
 ```bash
 $ curl --location --request POST 'http://localhost:8080/images/' \
 --header 'Content-Type: application/json' \
@@ -19,6 +22,7 @@ $ curl --location --request POST 'http://localhost:8080/images/' \
 ```
 
 GET conversion job information:
+
 ```bash
 $ curl 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18'
 
@@ -26,14 +30,17 @@ $ curl 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18'
 ```
 
 GET conversion output:
+
 ```bash
 $ curl -o test.pdf 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18/download'
 ```
 
 DELETE conversion:
+
 ```bash
 $ curl --request DELETE 'http://localhost:8080/images/7ae282c1-cec3-48d7-b1f9-93ed53114c18'
 ```
+
 ## Development
 
 ### Environment
@@ -70,7 +77,8 @@ pip install -r requirements-dev.txt
 
 ##### black
 
-`black` is used for formatting, because `black` does not ask about your opinion about how Python code should be formatted.
+`black` is used for formatting, because `black` does not ask about your opinion about how Python code should be
+formatted.
 
 ```bash
 black .
@@ -109,11 +117,13 @@ tox
 #### OpenAPI documentation
 
 * Open [Swagger UI](http://localhost:8000/docs) or [ReDoc](http://localhost:8000/redoc)
-* OpenAPI specs are available (as JSON) at http://localhost:8080/openapi.json 
+* OpenAPI specs are available (as JSON) at http://localhost:8080/openapi.json
 * Update `openapi.json` via `python update-openapi.py`
 
 ### All-in-one
+
 `tox.ini` is also configured to run some additional commands (like a Makefile):
+
 * `black .` for formatting
 * `python update-openapi.py` to update `openapi.yaml`
 * `pytest` for testing

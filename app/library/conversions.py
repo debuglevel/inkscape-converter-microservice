@@ -1,17 +1,9 @@
 import base64
 import logging
 import os
-from pprint import pprint
 from subprocess import call
-import logging
-import uuid
-from typing import Optional, BinaryIO, List
-from uuid import UUID
 
 import aiofiles
-from pydantic import BaseModel
-from datetime import datetime
-from tinydb import TinyDB, Query
 
 from app.library import configuration
 from app.library.conversion_repository import Conversion
@@ -56,10 +48,14 @@ def convert(conversion: Conversion):
     input_file = get_filename_from_id(conversion.id, conversion.input_format)
     output_file = get_filename_from_id(conversion.id, conversion.output_format)
 
-    convert_via_inkscape(conversion.input_format, conversion.output_format, input_file, output_file)
+    convert_via_inkscape(
+        conversion.input_format, conversion.output_format, input_file, output_file
+    )
 
 
-def convert_via_inkscape(input_format: str, output_format: str, input_filename: str, output_filename: str):
+def convert_via_inkscape(
+    input_format: str, output_format: str, input_filename: str, output_filename: str
+):
     logger.debug(
         f"Converting '{input_filename}' to '{output_filename}' via inkscape ({input_format} to {output_format})..."
     )
@@ -77,4 +73,6 @@ def convert_via_inkscape(input_format: str, output_format: str, input_filename: 
     logger.debug(f"Called inkscape")
 
     output_size = os.path.getsize(output_filename)
-    logger.debug(f"Inkscape destination file '{output_filename}' has {output_size} bytes")
+    logger.debug(
+        f"Inkscape destination file '{output_filename}' has {output_size} bytes"
+    )

@@ -1,12 +1,12 @@
-import os
-from pprint import pprint
 import logging
+import os
 import uuid
+from datetime import datetime
 from typing import Optional, List
 
 from pydantic import BaseModel
-from datetime import datetime
 from tinydb import TinyDB, Query
+
 from app.library import configuration
 
 logging.basicConfig(level=logging.DEBUG)
@@ -38,7 +38,10 @@ async def add(conversion: Conversion) -> Conversion:
 
     conversion_id = str(uuid.uuid4())
 
-    conversion = conversion.dict() | {"id": conversion_id, "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    conversion = conversion.dict() | {
+        "id": conversion_id,
+        "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
     conversion = Conversion(**conversion)
 
     with get_database() as database:
@@ -82,7 +85,10 @@ async def get_all() -> List[Conversion]:
         logger.debug(f"Got {retrieved_conversion_documents}")
 
         logger.debug("Converting documents to models...")
-        retrieved_conversions = [Conversion(**retrieved_conversion_document) for retrieved_conversion_document in retrieved_conversion_documents]
+        retrieved_conversions = [
+            Conversion(**retrieved_conversion_document)
+            for retrieved_conversion_document in retrieved_conversion_documents
+        ]
         logger.debug(f"Got {retrieved_conversions}")
 
         logger.debug(f"Got {len(retrieved_conversions)} items...")
@@ -97,5 +103,3 @@ async def delete(id_: str):
 
         logger.debug(f"Removing document...")
         database.remove(conversion_query.id == id_)
-
-

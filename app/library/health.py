@@ -1,6 +1,8 @@
 import logging
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
+
 from app.library.conversions import conversions
 
 logging.basicConfig(level=logging.DEBUG)

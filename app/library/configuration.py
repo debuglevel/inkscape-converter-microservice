@@ -21,9 +21,10 @@ def get_configuration():
 class Configuration(BaseSettings):
     database_directory: str = "data/database/"
     conversions_directory: str = "data/conversions/"
-    #some_string: str  # must be overridden by environment variable or startup fails
-    #some_string_with_default: str = "Nyan Cat"
-    #some_integer_with_default: int = 1138
+
+    # some_string: str  # must be overridden by environment variable or startup fails
+    # some_string_with_default: str = "Nyan Cat"
+    # some_integer_with_default: int = 1138
 
     class Config:
         env_file = "configuration.env"
