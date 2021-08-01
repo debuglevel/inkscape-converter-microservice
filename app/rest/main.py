@@ -6,6 +6,7 @@ import os
 import tempfile
 import uuid
 from pprint import pprint
+from typing import List
 
 from fastapi import FastAPI, status
 
@@ -91,5 +92,14 @@ async def post_image(conversion_request: ConversionRequest, background_tasks: Ba
 
     return conversion.to_conversion_response(conversion_)
 
+
+@fastapi.get("/images/",
+             response_model=List[ConversionResponse])
+async def get_images() -> List[ConversionResponse]:
+    logger.debug(f"Received GET request on /images/")
+
+    conversion_responses = [conversion.to_conversion_response(conversion_) for conversion_ in
+                            await conversions.get_all()]
+    return conversion_responses
+
 # TODO: DELETE
-# TODO: GET all

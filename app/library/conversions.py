@@ -5,7 +5,7 @@ from pprint import pprint
 from subprocess import call
 import logging
 import uuid
-from typing import Optional, BinaryIO
+from typing import Optional, BinaryIO, List
 from uuid import UUID
 
 import aiofiles
@@ -87,6 +87,22 @@ async def get(id_: str) -> Conversion:
     logger.debug(f"Got {retrieved_conversion}")
 
     return retrieved_conversion
+
+
+async def get_all() -> List[Conversion]:
+    logger.debug(f"Getting conversions...")
+
+    database = get_database()
+
+    logger.debug(f"Getting document...")
+    retrieved_conversion_documents = database.all()
+    logger.debug(f"Got {retrieved_conversion_documents}")
+
+    logger.debug("Converting documents to models...")
+    retrieved_conversions = [Conversion(**retrieved_conversion_document) for retrieved_conversion_document in retrieved_conversion_documents]
+    logger.debug(f"Got {retrieved_conversions}")
+
+    return retrieved_conversions
 
 
 def get_filename_from_id(id_: str, output_format: str) -> str:
