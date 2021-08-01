@@ -9,7 +9,7 @@ uvicorn==0.14.0
 aiofiles==0.7.0
 
 # Persistence
-#tinydb==4.4.0
+tinydb==4.4.0
 #mysql-connector-python==8.0.22
 
 # Retry

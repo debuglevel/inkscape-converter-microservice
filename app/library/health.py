@@ -1,7 +1,7 @@
 import logging
 from pydantic import BaseModel
 from datetime import datetime
-from app.library.conversion import conversions
+from app.library.conversions import conversions
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

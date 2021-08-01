@@ -5,14 +5,20 @@ import logging.config
 import os
 import tempfile
 import uuid
+from pprint import pprint
+
+from fastapi import FastAPI, status
 
 import aiofiles
 from fastapi import FastAPI
 from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse
 from app.library import health
-from app.rest.conversion import ConversionIn
-from app.library import conversion
+from app.library.conversions import Conversion
+from app.rest import conversion
+from app.rest.conversion import ConversionRequest, ConversionResponse
+from app.library import conversions
+from fastapi import BackgroundTasks, FastAPI
 
 fastapi = FastAPI()
 
@@ -32,9 +38,8 @@ async def get_health_async():
     return await health.get_health_async()
 
 
-@fastapi.post(
-    "/images/",
-    # Specifying a response class that doesn't have a built-in media type
+@fastapi.get(
+    "/images/{image_id}/download",  # Specifying a response class that doesn't have a built-in media type
     # (Response, not JSONResponse) seems good enough to stop FastAPI from
     # from assuming that the response type is "application/json". Without
     # this, FastAPI adds "application/json" as a possible response even if
@@ -45,42 +50,46 @@ async def get_health_async():
         200: {"content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}}
     },
 )
-async def convert_image(conversion_in: ConversionIn):
+async def download_image(image_id: str) -> FileResponse:
+    logger.debug(f"Received GET request on /images/{image_id}/download")
+
+    conversion_ = await conversions.get(image_id)
+    filename = conversions.get_filename_from_id(conversion_.id, conversion_.output_format)
+
+    # CAVEAT: provide a random filename as some clients may write temporary files with this name
+    # (and overwrite former files, which results in a great race condition)
+    filenamex = f"{conversion_.id}.{conversion_.output_format}"
+    logger.debug(f"Sending file as '{filename}'...")
+    return FileResponse(filename, filename=filenamex)
+
+
+@fastapi.get("/images/{image_id}",
+             response_model=ConversionResponse)
+async def get_image(image_id: str) -> ConversionResponse:
+    logger.debug(f"Received GET request on /images/{image_id}")
+
+    conversion_ = await conversions.get(image_id)
+
+    return conversion.to_conversion_response(conversion_)
+
+
+async def save_and_convert(conversion_: Conversion, base64_string: str):
+    await conversions.save_input_file(conversion_, base64_string)
+    conversions.convert(conversion_)
+
+
+@fastapi.post("/images/",
+              status_code=status.HTTP_202_ACCEPTED,
+              response_model=ConversionResponse)
+async def post_image(conversion_request: ConversionRequest, background_tasks: BackgroundTasks) -> ConversionResponse:
     logger.debug("Received POST request on /images/")
 
-    conversion_id = uuid.uuid4()
+    conversion_ = conversion.to_conversion(conversion_request)
+    conversion_ = await conversions.add(conversion_)
 
-    async with aiofiles.tempfile.NamedTemporaryFile(
-        mode="wb", suffix=f".{conversion_id}.{conversion_in.inputformat}"
-    ) as input_file:
-        logger.debug("Decoding Base64 encoded input...")
-        input_base64_bytes = conversion_in.base64.encode("ascii")
-        input_bytes = base64.b64decode(input_base64_bytes)
+    background_tasks.add_task(save_and_convert, *(conversion_, conversion_request.base64))
 
-        logger.debug(f"Writing input to '{input_file.name}'...")
-        await input_file.write(input_bytes)
-        await input_file.flush()
-        input_size = os.path.getsize(input_file.name)
-        logger.debug(f"Wrote input to '{input_file.name}': {input_size} bytes")
+    return conversion.to_conversion_response(conversion_)
 
-        # TODO: delete=False is a bad idea, because the file remains
-        async with aiofiles.tempfile.NamedTemporaryFile(
-            mode="w", suffix=f".{conversion_id}.{conversion_in.outputformat}", delete=False
-        ) as output_file:
-            # start a separate thread to avoid blocking the event loop and enable parallel inkscape processes
-            logger.debug("Running conversion in a thread...")
-            await asyncio.to_thread(conversion.convert, **{
-                "input_format": conversion_in.inputformat,
-                "output_format": conversion_in.outputformat,
-                "input_file": input_file,
-                "output_file": output_file,
-            })
-            logger.debug("Ran conversion in a thread")
-
-            # CAVEAT: provide a random filename as some clients may write temporary files with this name
-            # (and overwrite former files, which results in a great race condition)
-            filename = f"{conversion_id}.{conversion_in.outputformat}"
-            logger.debug(f"Sending PDF file as '{filename}'...")
-            return FileResponse(
-                output_file.name, filename=filename
-            )
+# TODO: DELETE
+# TODO: GET all
