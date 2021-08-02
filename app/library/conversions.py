@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import logging
 import os
@@ -48,9 +49,8 @@ async def convert(conversion: Conversion):
     input_file = get_filename_from_id(conversion.id, conversion.input_format)
     output_file = get_filename_from_id(conversion.id, conversion.output_format)
 
-    convert_via_inkscape(
-        conversion.input_format, conversion.output_format, input_file, output_file
-    )
+    # start in new thread to not block the event loop
+    await asyncio.to_thread(convert_via_inkscape, *(conversion.input_format, conversion.output_format, input_file, output_file))
     conversion.status = "done"
 
     await conversion_repository.update(conversion)
