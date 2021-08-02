@@ -1,21 +1,42 @@
 components:
   schemas:
-    ConversionIn:
+    ConversionRequest:
       properties:
         base64:
           title: Base64
           type: string
-        inputformat:
+        inputFormat:
           title: Inputformat
           type: string
-        outputformat:
+        outputFormat:
           title: Outputformat
           type: string
       required:
       - base64
-      - inputformat
-      - outputformat
-      title: ConversionIn
+      - inputFormat
+      - outputFormat
+      title: ConversionRequest
+      type: object
+    ConversionResponse:
+      properties:
+        createdOn:
+          title: Createdon
+          type: string
+        id:
+          title: Id
+          type: string
+        inputFormat:
+          title: Inputformat
+          type: string
+        outputFormat:
+          title: Outputformat
+          type: string
+      required:
+      - id
+      - inputFormat
+      - outputFormat
+      - createdOn
+      title: ConversionResponse
       type: object
     HTTPValidationError:
       properties:
@@ -71,18 +92,33 @@ paths:
           description: Successful Response
       summary: Get Health Async
   /images/:
+    get:
+      operationId: get_images_images__get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ConversionResponse'
+                title: Response Get Images Images  Get
+                type: array
+          description: Successful Response
+      summary: Get Images
     post:
-      operationId: convert_image_images__post
+      operationId: post_image_images__post
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConversionIn'
+              $ref: '#/components/schemas/ConversionRequest'
         required: true
       responses:
-        '200':
+        '202':
           content:
-            application/octet-stream: {}
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
           description: Successful Response
         '422':
           content:
@@ -90,4 +126,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-      summary: Convert Image
+      summary: Post Image
+  /images/{image_id}:
+    delete:
+      operationId: delete_image_images__image_id__delete
+      parameters:
+      - in: path
+        name: image_id
+        required: true
+        schema:
+          title: Image Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Delete Image
+    get:
+      operationId: get_image_images__image_id__get
+      parameters:
+      - in: path
+        name: image_id
+        required: true
+        schema:
+          title: Image Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get Image
+  /images/{image_id}/download:
+    get:
+      operationId: download_image_images__image_id__download_get
+      parameters:
+      - in: path
+        name: image_id
+        required: true
+        schema:
+          title: Image Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Download Image
