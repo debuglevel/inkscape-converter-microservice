@@ -5,7 +5,7 @@ from subprocess import call
 
 import aiofiles
 
-from app.library import configuration
+from app.library import configuration, conversion_repository
 from app.library.conversion_repository import Conversion
 
 logging.basicConfig(level=logging.DEBUG)
@@ -42,7 +42,7 @@ async def save_input_file(conversion_: Conversion, base64_string: str):
         logger.debug(f"Wrote input to '{input_file.name}': {size} bytes")
 
 
-def convert(conversion: Conversion):
+async def convert(conversion: Conversion):
     logger.debug(f"Converting {conversion}...")
 
     input_file = get_filename_from_id(conversion.id, conversion.input_format)
@@ -51,6 +51,9 @@ def convert(conversion: Conversion):
     convert_via_inkscape(
         conversion.input_format, conversion.output_format, input_file, output_file
     )
+    conversion.status = "done"
+
+    await conversion_repository.update(conversion)
 
 
 def convert_via_inkscape(

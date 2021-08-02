@@ -18,7 +18,9 @@ class Conversion(BaseModel):
     id: Optional[str]
     input_format: str
     output_format: str
+    status: str
     created_on: Optional[str]
+    modified_on: Optional[str]
 
 
 def get_database() -> TinyDB:
@@ -35,27 +37,55 @@ def get_database_filename() -> str:
 
 
 async def add(conversion: Conversion) -> Conversion:
-    logger.debug(f"Creating...")
+    logger.debug(f"Adding...")
 
     conversion_id = str(uuid.uuid4())
 
     conversion = conversion.dict() | {
         "id": conversion_id,
         "created_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "modified_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
     conversion = Conversion(**conversion)
 
     with get_database() as database:
-        logger.debug(f"Inserting {conversion}...")
+        logger.debug(f"Inserting {conversion} in database...")
         document_id = database.insert(conversion.dict())
+        logger.debug(f"Inserted {conversion} in database: doc_id={document_id}")
 
-        logger.debug(f"Getting inserted...")
+        logger.debug(f"Getting inserted with doc_id={document_id}......")
         retrieved_conversion_document = database.get(doc_id=document_id)
         logger.debug(f"Got inserted {retrieved_conversion_document}")
 
         logger.debug("Converting document to model...")
         retrieved_conversion = Conversion(**retrieved_conversion_document)
         logger.debug(f"Got inserted {retrieved_conversion}")
+
+        return retrieved_conversion
+
+
+async def update(conversion: Conversion) -> Conversion:
+    logger.debug(f"Updating id={conversion.id}...")
+
+    conversion = conversion.dict() | {
+        "modified_on": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+    conversion = Conversion(**conversion)
+
+    with get_database() as database:
+        conversion_query = Query()
+
+        logger.debug(f"Updating {conversion} in database...")
+        document_id = database.update(conversion.dict(), conversion_query.id == conversion.id)[0]
+        logger.debug(f"Updated {conversion} in database: doc_id={document_id}")
+
+        logger.debug(f"Getting updated with doc_id={document_id}...")
+        retrieved_conversion_document = database.get(doc_id=document_id)
+        logger.debug(f"Got updated {retrieved_conversion_document}")
+
+        logger.debug("Converting document to model...")
+        retrieved_conversion = Conversion(**retrieved_conversion_document)
+        logger.debug(f"Got updated {retrieved_conversion}")
 
         return retrieved_conversion
 
