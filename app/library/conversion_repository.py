@@ -4,10 +4,11 @@ import uuid
 from datetime import datetime
 from typing import Optional, List
 
+import aiofiles
 from pydantic import BaseModel
 from tinydb import TinyDB, Query
 
-from app.library import configuration
+from app.library import configuration, conversions
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -95,8 +96,23 @@ async def get_all() -> List[Conversion]:
         return retrieved_conversions
 
 
+async def delete_files(conversion_: Conversion):
+    logger.debug(f"Deleting files for id={conversion_.id}...")
+
+    for format_ in [conversion_.output_format, conversion_.input_format]:
+        filename = conversions.get_filename_from_id(conversion_.id, format_)
+        try:
+            logger.debug(f"Deleting file '{filename}'...")
+            await aiofiles.os.remove(filename)
+        except OSError as e:
+            logger.warning(f"Error while deleting file '{e.filename}': {e.strerror}")
+
+
 async def delete(id_: str):
     logger.debug(f"Deleting with id={id_}...")
+
+    conversion_ = await get(id_)
+    await delete_files(conversion_)
 
     with get_database() as database:
         conversion_query = Query()
