@@ -31,8 +31,12 @@ def get_database() -> TinyDB:
 
 def get_database_filename() -> str:
     logger.debug("Getting database filename...")
-    database_directory = configuration.get_configuration().database_directory
-    os.makedirs(database_directory, exist_ok=True)
+    database_directory = configuration.get_configuration().get_database_directory()
+
+    if not os.path.isdir(database_directory):
+        logger.debug(f"Database directory '{database_directory}' does not exist, creating directory...")
+        os.makedirs(database_directory, exist_ok=True)
+
     return os.path.join(database_directory, "database.json")
 
 

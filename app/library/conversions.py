@@ -17,8 +17,12 @@ conversions: int = 0
 
 def get_conversions_directory():
     logger.debug("Getting conversions directory...")
-    conversions_directory = configuration.get_configuration().conversions_directory
-    os.makedirs(conversions_directory, exist_ok=True)
+    conversions_directory = configuration.get_configuration().get_conversions_directory()
+
+    if not os.path.isdir(conversions_directory):
+        logger.debug(f"Conversion directory '{conversions_directory}' does not exist, creating directory...")
+        os.makedirs(conversions_directory, exist_ok=True)
+
     return conversions_directory
 
 

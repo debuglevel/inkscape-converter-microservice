@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Optional
 
 from pydantic import BaseSettings
 
@@ -15,16 +16,37 @@ logger = logging.getLogger(__name__)
 @lru_cache()
 def get_configuration():
     logger.debug("Getting configuration...")
-    return Configuration()
+    configuration = Configuration()
+    logger.debug(f"Got configuration: {configuration}")
+    return configuration
 
 
 class Configuration(BaseSettings):
-    database_directory: str = "data/database/"
-    conversions_directory: str = "data/conversions/"
+    data_directory: str = "data/"
+    database_directory: Optional[str]
+    conversions_directory: Optional[str]
 
     # some_string: str  # must be overridden by environment variable or startup fails
     # some_string_with_default: str = "Nyan Cat"
     # some_integer_with_default: int = 1138
+
+    def get_database_directory(self):
+        if self.database_directory is None:
+            database_directory = f"{self.data_directory}/database/"
+            logger.debug(f"Database directory not specified. Using data directory: {database_directory}")
+            return database_directory
+        else:
+            logger.debug(f"Database directory specified: {self.database_directory}")
+            return self.database_directory
+
+    def get_conversions_directory(self):
+        if self.conversions_directory is None:
+            conversions_directory = f"{self.data_directory}/database/"
+            logger.debug(f"Conversions directory not specified. Using data directory: {conversions_directory}")
+            return conversions_directory
+        else:
+            logger.debug(f"Conversions directory specified: {self.conversions_directory}")
+            return self.conversions_directory
 
     class Config:
         env_file = "configuration.env"
