@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import lru_cache
 from typing import Optional
 
@@ -36,21 +37,25 @@ class Configuration(BaseSettings):
 
     def get_database_directory(self):
         if self.database_directory is None:
-            database_directory = f"{self.data_directory}/database/"
-            logger.debug(f"Database directory not specified. Using data directory: {database_directory}")
-            return database_directory
+            directory = f"{self.data_directory}/database/"
+            logger.debug(f"Database directory not specified. Using data directory: {directory}")
         else:
+            directory = self.database_directory
             logger.debug(f"Database directory specified: {self.database_directory}")
-            return self.database_directory
+
+        ensure_directory_exists(directory)
+        return directory
 
     def get_conversions_directory(self):
         if self.conversions_directory is None:
-            conversions_directory = f"{self.data_directory}/database/"
-            logger.debug(f"Conversions directory not specified. Using data directory: {conversions_directory}")
-            return conversions_directory
+            directory = f"{self.data_directory}/conversions/"
+            logger.debug(f"Conversions directory not specified. Using data directory: {directory}")
         else:
-            logger.debug(f"Conversions directory specified: {self.conversions_directory}")
-            return self.conversions_directory
+            directory = self.conversions_directory
+            logger.debug(f"Conversions directory specified: {directory}")
+
+        ensure_directory_exists(directory)
+        return directory
 
     class Config:
         env_file = "configuration.env"
