@@ -21,14 +21,18 @@ def get_configuration():
     return configuration
 
 
+def ensure_directory_exists(path: str):
+    logger.debug(f"Ensure configured directory {path} exists...")
+
+    if not os.path.isdir(path):
+        logger.warning(f"Configured directory '{path}' does not exist, creating directory...")
+        os.makedirs(path, exist_ok=True)
+
+
 class Configuration(BaseSettings):
     data_directory: str = "data/"
     database_directory: Optional[str]
     conversions_directory: Optional[str]
-
-    # some_string: str  # must be overridden by environment variable or startup fails
-    # some_string_with_default: str = "Nyan Cat"
-    # some_integer_with_default: int = 1138
 
     def get_database_directory(self):
         if self.database_directory is None:
